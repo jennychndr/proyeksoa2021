@@ -1,0 +1,158 @@
+var express = require("express");
+const router= express.Router();
+const mysql = require("mysql");
+const jwt = require("jsonwebtoken");
+const dbase = require("../connection");
+
+const multer=require("multer");
+
+module.exports=router;
+const connection=mysql.createConnection({host:"localhost", database:"project_soa", user:"root", password:""});
+connection.connect();
+
+
+const storage=multer.diskStorage(
+    {
+        destination: function(req, res, callback){
+            callback(null, "./uploads");    
+        },
+        filename: async function(req, file, callback){
+            const extension="jpg";
+            var kode=req.body.id_user;
+            let filename= await bikinNamaFoto();
+            callback(null, filename+"."+extension);
+        }
+    }
+);
+
+function checkFileType(file,cb){
+    const filetypes= /jpg/;
+    const extname=filetypes.test(file.originalname.split('.')[file.originalname.split('.').length-1]);
+    const mimetype=filetypes.test(file.mimetype);
+    if(mimetype && extname){
+        return cb(null,true);
+    }else{
+        cb(error = 'Error : Image Only!');
+    }
+}
+
+const uploads=multer({
+    storage:storage,
+    fileFilter: function(req, file, cb){
+        checkFileType(file, cb);
+    }
+});
+
+
+async function bikinNamaFoto(){
+    var query=`SELECT LPAD(COUNT(ID_USER)+1,3,"0") as id FROM USERS`;
+    var hasil= await dbase.executeQuery(query);
+    var id=hasil[0].id;
+    newkode="U"+id;
+    var filename="U"+id;
+    return filename;
+}
+
+
+router.post('/register', uploads.single("foto_user"), (req,res) => {
+    var newnama_user = req.body.nama_user;
+    var newusername = req.body.username;
+    var newpassword = req.body.password;
+    var newconf_password = req.body.conf_password;
+    if(newpassword==newconf_password){
+        connection.query(`SELECT * FROM USERS WHERE username = '${newusername}'`,(err, result, field)=> {
+            if(err) throw err;
+            if(result.length>0){
+                //user sudah ada
+                //BLM TAK KASI LOG
+                res.status(404).send("Username sudah digunakan. Pilih username lain!");
+            }else{
+                connection.query(`SELECT LPAD(COUNT(ID_USER)+1,3,"0") as id FROM USERS`,(err, result, field)=> {
+                    if(err) throw err;
+                    var id=result[0].id;
+                    kode="U"+id;
+                    connection.query(`INSERT INTO USERS(username, nama_user, password) VALUES (?,?,?)`,[kode, newnama_user, newpassword],(err, result, field)=> {
+                        if(err) throw err;
+                        res.status(201).send({
+                            id_user: kode,
+                            username: newusername,
+                            nama_user: newnama_user,
+                            api_hit: "0",
+                            saldo: "0",
+                            msg: "Berhasil menambahkan user!"
+                        });
+                    });
+                });
+            }
+        });
+    }
+    else{
+        res.status(404).send("Password dan konfirmasi tidak cocok");
+    }
+
+});
+
+
+router.post("/login",function(req,res){
+    const username = req.body.username;
+    const password = req.body.password;
+    connection.query(`select * from users where username='${username}' and password ='${password}'`,function(err,result){
+        if(err) res.status(500).send(err);
+        else{
+            if(result.length <0){
+                return res.status(400).send("Invalid username or password");
+            }
+            const token = jwt.sign({    
+                    "username": username,
+                },
+                "vagabond");
+            temp={
+                "username":username,
+                "token":token
+            };
+            res.status(200).send(temp);
+        }
+    });
+});
+
+
+router.put("/delete",function(req,res){
+    const username = req.body.username;
+    const password = req.body.password;
+    connection.query(`select * from users where username='${username}' and password ='${password}'`,function(err,result){
+        if(err) res.status(500).send(err);
+        else{
+            if(result.length <0){
+                return res.status(400).send("Invalid username or password");
+            }
+            connection.query(`update users set status=0 where username='${username}'`,function(err,result){
+                res.status(200).send("Account dihapus!");
+            });
+        }
+    });
+});
+
+router.put("/update",function(req,res){
+    const username = req.body.username;
+    const password_lama = req.body.password_lama;
+    const nama_user = req.body.nama_user;
+    const password_baru = req.body.password_baru;
+    connection.query(`select * from users where username='${username}' and password ='${password_lama}'`,function(err,result){
+        if(err) res.status(500).send(err);
+        else{
+            if(result.length <0){
+                return res.status(400).send("Invalid username or password");
+            }
+            var qstring="";
+            if(nama_user){
+                qstring+="nama_user='"+nama_user+"'";
+            }
+            if(password_baru){
+                qstring+="password='"+password_baru+"'";
+            }
+            connection.query(`update users set ${qstring} where username='${username}'`,function(err,result){
+                res.status(200).send("Profil berhasil diganti!");
+            });
+        }
+    });
+});
