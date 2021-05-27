@@ -117,9 +117,22 @@ router.post("/login",function(req,res){
 
 
 router.put("/delete",function(req,res){
-    const username = req.body.username;
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+    // const username = req.body.username;
     const password = req.body.password;
-    connection.query(`select * from users where username='${username}' and password ='${password}'`,function(err,result){
+    connection.query(`select * from users where username='${user.username}' and password ='${password}'`,function(err,result){
         if(err) res.status(500).send(err);
         else{
             if(result.length <0){
@@ -133,11 +146,24 @@ router.put("/delete",function(req,res){
 });
 
 router.put("/update",function(req,res){
-    const username = req.body.username;
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+    // const username = req.body.username;
     const password_lama = req.body.password_lama;
     const nama_user = req.body.nama_user;
     const password_baru = req.body.password_baru;
-    connection.query(`select * from users where username='${username}' and password ='${password_lama}'`,function(err,result){
+    connection.query(`select * from users where username='${user.username}' and password ='${password_lama}'`,function(err,result){
         if(err) res.status(500).send(err);
         else{
             if(result.length <0){
@@ -150,8 +176,70 @@ router.put("/update",function(req,res){
             if(password_baru){
                 qstring+="password='"+password_baru+"'";
             }
-            connection.query(`update users set ${qstring} where username='${username}'`,function(err,result){
+            connection.query(`update users set ${qstring} where username='${user.username}'`,function(err,result){
                 res.status(200).send("Profil berhasil diganti!");
+            });
+        }
+    });
+});
+
+
+router.put("/recommendations",function(req,res){
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+    const password = req.body.password;
+    connection.query(`select * from users where username='${user.username}' and password ='${password}'`,function(err,result){
+        if(err) res.status(500).send(err);
+        else{
+            var id_aktif=result[0].id_user;
+            connection.query(`select teman_user as teman from friends where id_user='${id_aktif}'`,function(err,result){
+                //dapatkan list friends
+                var friends=result.teman;
+                var songs=[];
+                for(var i=0; i<friends.length; i++){
+                    connection.query(`select * from h_playlist where id_user='${friends[i]}'`,function(err,result){
+                        var playlists=result.id_playlist;
+                        for(var j=0; j<playlists.length; j++){
+                            connection.query(`select * from d_playlist where id_playlist='${playlists[j]}'`,function(err,result){
+                                songs.append(result.id_lagu);
+                            });
+                        }
+                    });
+                }
+                var my_songs=[];
+                connection.query(`select * from h_playlist where id_user='${id_aktif}'`,function(err,result){
+                    var playlists_user=result.id_playlist;
+                    for(var j=0; j<playlists_user.length; j++){
+                        connection.query(`select * from d_playlist where id_playlist='${playlists_user[j]}'`,function(err,result){
+                            my_songs.append(result.id_lagu);
+                        });
+                    }
+                });
+                var recc=[];
+                for(var i=0; i<songs.length; i++){
+                    var flag=1;
+                    for(var j=0; j<my_songs.length; j++){
+                        if(songs[i]==my_songs[j]){
+                            flag=0;
+                            j=my_songs.length;
+                        }
+                    }
+                    if(flag==1){
+                        recc.append(songs[i]);
+                    }
+                }
+                res.status(200).send({"Recommendations:" : recc});
             });
         }
     });
