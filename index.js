@@ -10,6 +10,3 @@ app.listen(3000, function(){
 
 const users = require("./routes/users");
 app.use("/api/users",users);
-
-// const plant = require("./routes/plant");
-// app.use("/api/plant",plant);
