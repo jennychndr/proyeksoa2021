@@ -26,7 +26,7 @@ const storage=multer.diskStorage(
 );
 
 function checkFileType(file,cb){
-    const filetypes= /jpg/;
+    const filetypes= /jpeg|jpg/;
     const extname=filetypes.test(file.originalname.split('.')[file.originalname.split('.').length-1]);
     const mimetype=filetypes.test(file.mimetype);
     if(mimetype && extname){
@@ -71,7 +71,7 @@ router.post('/register', uploads.single("foto_user"), (req,res) => {
                     if(err) throw err;
                     var id=result[0].id;
                     kode="U"+id;
-                    connection.query(`INSERT INTO USERS(username, nama_user, password) VALUES (?,?,?)`,[kode, newnama_user, newpassword],(err, result, field)=> {
+                    connection.query(`INSERT INTO USERS(id_user, username, nama_user, password) VALUES (?,?,?,?)`,[kode, newusername, newnama_user, newpassword],(err, result, field)=> {
                         if(err) throw err;
                         res.status(201).send({
                             id_user: kode,
@@ -174,6 +174,7 @@ router.put("/update",function(req,res){
                 qstring+="nama_user='"+nama_user+"'";
             }
             if(password_baru){
+                if(nama_user) qstring+=", ";
                 qstring+="password='"+password_baru+"'";
             }
             connection.query(`update users set ${qstring} where username='${user.username}'`,function(err,result){
