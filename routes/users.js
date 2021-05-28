@@ -184,7 +184,119 @@ router.put("/update",function(req,res){
     });
 });
 
+router.get("/searchFriends",function(req,res){
+    var friend_username=req.body.friend_username;
+    friend_username=friend_username.toString().toLowerCase();
+    connection.query(`select id_user, username, nama_user from users where lower(username) like '%${friend_username}%'`,function(err,result){
+        if(result.length<=0){
+            res.status(404).send("Tidak ada user yang ditemukan");
+        }else{
+            res.status(200).send(result);
+        }
+    });
+});
 
+router.get("/addFriends",function(req,res){
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+    var friend_username=req.body.friend_username;
+    var friend_id=req.body.friend_id;
+    connection.query(`select * from users where username='${user.username}'`,function(err,result){
+        if(err) res.status(500).send(err);
+        else{
+            if(result.length <1){
+                return res.status(400).send("Invalid username");
+            }
+            var id_aktif=result[0].id_user;
+            if(friend_username){
+                var qstring="username='"+friend_username+"'";
+            }
+            else if(friend_id){
+                qstring="user_id='"+friend_id+"'";
+            }
+            connection.query(`select id_user, username, nama_user from users where ${qstring}`,function(err,result){
+                if(result.length<=0){
+                    res.status(404).send("Tidak ada user yang ditemukan");
+                }else{
+                    var temp={
+                        username: result[0].username,
+                        nama_user: result[0].nama_user,
+                        msg: "Teman berhasil ditambahkan!"
+                    };
+                    var id_teman=result[0].id_user;
+                    connection.query(`insert into friends values(?,?)`,[id_aktif, id_teman],function(err,result){
+                        res.status(201).send(temp);
+                    });
+                }
+            });
+        }
+    });
+    
+});
+
+
+router.delete("/removeFriends",function(req,res){
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+    var friend_username=req.body.friend_username;
+    var friend_id=req.body.friend_id;
+    connection.query(`select * from users where username='${user.username}'`,function(err,result){
+        if(err) res.status(500).send(err);
+        else{
+            if(result.length <1){
+                return res.status(400).send("Invalid username");
+            }
+            var id_aktif=result[0].id_user;
+            if(friend_username){
+                var qstring="username='"+friend_username+"'";
+            }
+            else if(friend_id){
+                qstring="user_id='"+friend_id+"'";
+            }
+            connection.query(`select id_user, username, nama_user from users where ${qstring}`,function(err,result){
+                if(result.length<=0){
+                    res.status(404).send("Tidak ada user yang ditemukan");
+                }else{
+                    var id_teman=result[0].id_user;
+                    connection.query(`select teman_user from friends where teman_user='${id_teman}' and id_user='${id_aktif}'`,function(err,result){
+                        if(result.length<=0){
+                            res.status(404).send("User yang dicari bukan teman");
+                        }else{
+                            connection.query(`delete from friends where teman_user='${id_teman}' and id_user='${id_aktif}'`,function(err,result){
+                                res.status(200).send({msg: "Teman dengan id "+id_teman+" sudah dihapus"});
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+    
+});
+
+//Masih blm
 router.put("/recommendations",function(req,res){
     const token = req.header("x-auth-token");
     let user = {};
