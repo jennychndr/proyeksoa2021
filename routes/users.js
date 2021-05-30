@@ -376,8 +376,12 @@ router.post("/topup",function(req,res){
     // const username = req.body.username;
     const saldo = req.body.saldo;
     let saldodulu=0;
-    let tgl= new Date();
-    let dd=tgl.getFullYear()+"-"+tgl.getMonth()+"-"+tgl.getDate();
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+
+    today = yyyy+ '-' + mm + '-' + dd;
     connection.query(`select saldo from users where username='${user.username}'`,function(err,result){
         if(err) res.status(500).send(err);
         else{
@@ -385,7 +389,7 @@ router.post("/topup",function(req,res){
                 return res.status(404).send("user tidak terdaftar");
             }
             connection.query(`select id_user from users where username='${user.username}'`,function(err,result){
-                connection.query(`insert into requests values('${result[0].id_user}','${saldo}',0,'${dd}','')`,function(err,result){
+                connection.query(`insert into requests values('${result[0].id_user}','${saldo}',0,'${today}','')`,function(err,result){
                    
                         return res.status(200).send("berhasil request tambahkan saldo,meunggu di acc admin");
                     
@@ -404,8 +408,12 @@ router.post("/topup",function(req,res){
 router.put("/req/acc/:id_req",function(req,res){
     
     const id = req.params.id_req;
-    let tgl= new Date();
-    let dd=tgl.getFullYear()+"-"+tgl.getMonth()+"-"+tgl.getDate();
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+
+    today = yyyy+ '-' + mm + '-' + dd;
     connection.query(`select status from requests where id_req=${id}`,function(err,resu){
         if(resu[0].status!="0"){
             return res.status(400).send("sudah pernah di acc/decline");
@@ -423,7 +431,7 @@ router.put("/req/acc/:id_req",function(req,res){
                     connection.query(`update users set saldo=${parseInt(result[0].saldo)+parseInt(result2[0].saldo)} where id_user='${result2[0].id_user}'`,function(err,result){
                         connection.query(`update requests set status=1 where id_req=${id}`,function(err,result){
                             //return res.json(result[0].saldo);
-                            connection.query(`insert into trans_history values('${result2[0].id_user}',0,${result2[0].saldo},'${dd}')`,function(err,result){
+                            connection.query(`insert into trans_history values('${result2[0].id_user}',0,${result2[0].saldo},'${today}')`,function(err,result){
                                 return res.status(200).send("saldo berhasil ditambahkan ke user");
                             });
                         });
@@ -495,14 +503,18 @@ router.put("/apihit",function(req,res){
             if(result[0].saldo<10000){
                 return res.status(404).send("saldo tidak cukup");
             }
-            let tgl=new Date();
-            let dd=tgl.getFullYear()+"-"+tgl.getMonth()+"-"+tgl.getDate();
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+            var yyyy = today.getFullYear();
+
+            today = yyyy+ '-' + mm + '-' + dd;
             
             connection.query(`update users set saldo=${result[0].saldo-10000} where username='${user.username}'`,function(err,result){
                 connection.query(`select api_hit from users where username='${user.username}'`,function(err,result){
                     connection.query(`update users set api_hit=${result[0].api_hit+10}  where username='${user.username}'`,function(err,result){
                         connection.query(`select id_user from users where username='${user.username}'`,function(err,result){
-                            connection.query(`insert into trans_history values('${result[0].id_user}',1,10,'${dd}')`,function(err,result){
+                            connection.query(`insert into trans_history values('${result[0].id_user}',1,10,'${today}')`,function(err,result){
                                 return res.status(200).send("berhasil tambahkan api hit");
                             });
                         });
@@ -511,6 +523,74 @@ router.put("/apihit",function(req,res){
             });
             
         }
+    });
+    
+   
+});
+
+router.get("/income",function(req,res){
+   
+    // const username = req.body.username;
+    const awal=req.body.tanggal_awal;
+    const akhir=req.body.tanggal_akhir;
+    if(awal==""&&akhir==""){
+        connection.query(`select * from trans_history where type=0`,function(err,result){
+            let kump=[];
+            for (let i = 0; i < result.length; i++) {
+                //return res.json(result[i].tgl_transaksi);
+                    let tg=new Date(result[i].tgl_transaksi);
+                    let a1=tg.getDate();
+                    let a2=tg.getMonth()+1;
+                    let a3=tg.getFullYear();
+                    let hasil1=a3+"-"+a2+"-"+a1;
+                    //return res.json(hasil1);
+                    let isi=Date.parse(hasil1);
+                    //return res.json(isi);
+                    
+                    
+                    let data={
+                        user_id:result[i].id_user,
+                        jumlah:result[i].jumlah,
+                        tanggal_transaksi:hasil1
+    
+                    }
+                    kump.push(data)
+                
+                
+            }
+    
+            return res.status(200).send(kump);
+        });
+    }
+    let a=Date.parse(awal);
+    let b=Date.parse(akhir);
+    
+    connection.query(`select * from trans_history where type=0`,function(err,result){
+        let kump=[];
+        for (let i = 0; i < result.length; i++) {
+            //return res.json(result[i].tgl_transaksi);
+                let tg=new Date(result[i].tgl_transaksi);
+                let a1=tg.getDate();
+                let a2=tg.getMonth()+1;
+                let a3=tg.getFullYear();
+                let hasil1=a3+"-"+a2+"-"+a1;
+                //return res.json(hasil1);
+                let isi=Date.parse(hasil1);
+                //return res.json(isi);
+                if(isi>=a&&isi<=b){
+                
+                let data={
+                    user_id:result[i].id_user,
+                    jumlah:result[i].jumlah,
+                    tanggal_transaksi:hasil1
+
+                }
+                kump.push(data)
+            }
+            
+        }
+
+        return res.status(200).send(kump);
     });
     
    
@@ -548,12 +628,16 @@ router.get("/history",function(req,res){
                     }else{
                         jen="Top Up Saldo"
                     }
-                    let tt=result[i].tgl_transaksi;
+                    let tg=new Date(result[i].tgl_transaksi);
+                    let a1=tg.getDate();
+                    let a2=tg.getMonth()+1;
+                    let a3=tg.getFullYear();
+                    let hasil1=a3+"-"+a2+"-"+a1;
                    
                    let data={
                        "jenis transaksi":jen,
                        "jumlah":result[i].jumlah,
-                       "tanggal_transaksi":st
+                       "tanggal_transaksi":hasil1
                    }
                     qq.push(data);
                 }
