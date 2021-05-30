@@ -104,6 +104,7 @@ router.post("/login",function(req,res){
             }
             const token = jwt.sign({    
                     "username": username,
+
                 },
                 "vagabond");
             temp={
@@ -358,9 +359,7 @@ router.put("/recommendations",function(req,res){
     });
 });
 
-
-
-router.put("/topup",function(req,res){
+router.post("/topup",function(req,res){
     const token = req.header("x-auth-token");
     let user = {};
     if(!token){
@@ -385,11 +384,11 @@ router.put("/topup",function(req,res){
             if(result.length <0){
                 return res.status(404).send("user tidak terdaftar");
             }
-            connection.query(`update users set saldo=${parseInt(saldo)+result[0].saldo} where username='${user.username}'`,function(err,result){
-                connection.query(`select id_user from users where username='${user.username}'`,function(err,result){
-                    connection.query(`insert into trans_history values('${result[0].id_user}',0,${parseInt(saldo)},to_date('${dd}'))`,function(err,result){
-                        return res.status(200).send("berhasil tambahkan saldo");
-                    });
+            connection.query(`select id_user from users where username='${user.username}'`,function(err,result){
+                connection.query(`insert into requests values('${result[0].id_user}','${saldo}',0,'${dd}','')`,function(err,result){
+                   
+                        return res.status(200).send("berhasil request tambahkan saldo,meunggu di acc admin");
+                    
                 });
                 
             });
@@ -400,6 +399,77 @@ router.put("/topup",function(req,res){
    
 });
 
+
+
+router.put("/req/acc/:id_req",function(req,res){
+    
+    const id = req.params.id_req;
+    let tgl= new Date();
+    let dd=tgl.getFullYear()+"-"+tgl.getMonth()+"-"+tgl.getDate();
+    connection.query(`select status from requests where id_req=${id}`,function(err,resu){
+        if(resu[0].status!="0"){
+            return res.status(400).send("sudah pernah di acc/decline");
+        }
+        connection.query(`select id_user,saldo from requests where id_req='${id}'`,function(err,result2){
+            if(err) res.status(500).send(err);
+            else{
+                if(result2.length <0){
+                    return res.status(404).send("request tidak ada");
+                }
+                //return res.status(200).send(result2[0].id_user);
+                
+                connection.query(`select saldo from users where id_user='${result2[0].id_user}'`,function(err,result){
+                    //return res.json(result[0].saldo);
+                    connection.query(`update users set saldo=${parseInt(result[0].saldo)+parseInt(result2[0].saldo)} where id_user='${result2[0].id_user}'`,function(err,result){
+                        connection.query(`update requests set status=1 where id_req=${id}`,function(err,result){
+                            //return res.json(result[0].saldo);
+                            connection.query(`insert into trans_history values('${result2[0].id_user}',0,${result2[0].saldo},'${dd}')`,function(err,result){
+                                return res.status(200).send("saldo berhasil ditambahkan ke user");
+                            });
+                        });
+                    });
+                    
+                });
+                
+            }
+        });
+    });
+    
+    
+   
+});
+
+
+router.put("/req/dec/:id_req",function(req,res){
+    
+    const id = req.params.id_req;
+    let tgl= new Date();
+    let dd=tgl.getFullYear()+"-"+tgl.getMonth()+"-"+tgl.getDate();
+    connection.query(`select status from requests where id_req=${id}`,function(err,resu){
+        if(resu[0].status!="0"){
+            return res.status(400).send("sudah pernah di acc/decline");
+        }
+        connection.query(`select id_user,saldo from requests where id_req='${id}'`,function(err,result2){
+            if(err) res.status(500).send(err);
+            else{
+                if(result2.length <0){
+                    return res.status(404).send("request tidak ada");
+                }
+                //return res.status(200).send(result2[0].id_user);
+                
+                connection.query(`update requests set status=2 where id_req=${id}`,function(err,result){
+                    //return res.json(result[0].saldo);
+                    return res.status(200).send("permintaan berhasil di decline");
+                    
+                });
+                
+            }
+        });
+    });
+    
+    
+   
+});
 router.put("/apihit",function(req,res){
     const token = req.header("x-auth-token");
     let user = {};
@@ -432,12 +502,62 @@ router.put("/apihit",function(req,res){
                 connection.query(`select api_hit from users where username='${user.username}'`,function(err,result){
                     connection.query(`update users set api_hit=${result[0].api_hit+10}  where username='${user.username}'`,function(err,result){
                         connection.query(`select id_user from users where username='${user.username}'`,function(err,result){
-                            connection.query(`insert into trans_history values('${result[0].id_user}',1,10,to_date('${dd}'))`,function(err,result){
+                            connection.query(`insert into trans_history values('${result[0].id_user}',1,10,'${dd}')`,function(err,result){
                                 return res.status(200).send("berhasil tambahkan api hit");
                             });
                         });
                     });
                 });
+            });
+            
+        }
+    });
+    
+   
+});
+
+router.get("/history",function(req,res){
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+    // const username = req.body.username;
+    
+    connection.query(`select id_user from users where username='${user.username}'`,function(err,result){
+        if(err) res.status(500).send(err);
+        else{
+            if(result.length <0){
+                return res.status(404).send("user tidak terdaftar");
+            }
+        
+            connection.query(`select type,jumlah,tgl_transaksi from trans_history where id_user='${result[0].id_user}'`,function(err,result){
+                let qq=[];
+                for (let i = 0; i < result.length; i++) {
+                    let jen="";
+                    if(result[i].type==1){
+                        jen="Pembelian Api Hit"
+                    }else{
+                        jen="Top Up Saldo"
+                    }
+                    let tt=result[i].tgl_transaksi;
+                   
+                   let data={
+                       "jenis transaksi":jen,
+                       "jumlah":result[i].jumlah,
+                       "tanggal_transaksi":st
+                   }
+                    qq.push(data);
+                }
+                return res.status(200).send(qq);
             });
             
         }
