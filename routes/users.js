@@ -357,3 +357,44 @@ router.put("/recommendations",function(req,res){
         }
     });
 });
+
+
+
+router.put("/topup",function(req,res){
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+    // const username = req.body.username;
+    const saldo = req.body.saldo;
+    connection.query(`select saldo from users where username='${user.username}'`,function(err,result){
+        if(err) res.status(500).send(err);
+        else{
+            if(result.length <0){
+                return res.status(404).send("user tidak terdaftar");
+            }
+            return res.status(200).send(result[0].saldo);
+            
+        }
+    });
+    connection.query(`select * from users where username='${user.username}' and password ='${password}'`,function(err,result){
+        if(err) res.status(500).send(err);
+        else{
+            if(result.length <0){
+                return res.status(400).send("Invalid username or password");
+            }
+            connection.query(`update users set status=0 where username='${user.username}'`,function(err,result){
+                res.status(200).send("Account dihapus!");
+            });
+        }
+    });
+});
