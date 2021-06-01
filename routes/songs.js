@@ -105,5 +105,57 @@ router.post('/addsongtoplaylist', async(req,res) => {
     }
 });
 
+//Delete playlist
+router.delete('/deleteplaylist', async(req,res) => {
+    const xtoken = req.header("x-auth-token");
+    let user = {};
+    if(!xtoken){
+        return res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(xtoken,"vagabond");
+    }catch(err){
+        return res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){
+        return res.status(400).send("Token expired");
+    }
+
+    let id_playlist = req.body.id_playlist;
+    let deletedplaylist = `delete from d_playlist where id_playlist = '${id_playlist}'`;
+    let resultDel = await dbase.executeQuery(deleteplaylist);
+
+    let deletehplaylist = `delete from h_playlist where id_playlist = '${id_playlist}'`;
+    let resultDel1 = await dbase.executeQuery(deletehplaylist);
+
+    return res.status(200).send("Playlist berhasil dihapus");
+
+});
+
+//Delete song from playlist
+router.delete('/deletesong', async(req,res) => {
+    const xtoken = req.header("x-auth-token");
+    let user = {};
+    if(!xtoken){
+        return res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(xtoken,"vagabond");
+    }catch(err){
+        return res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){
+        return res.status(400).send("Token expired");
+    }
+
+    let id_playlist = req.body.id_playlist;
+    let songs_id = req.body.songs_id;
+
+    let deleteSong = `delete from d_playlist where id_playlist = '${id_playlist}' and id_lagu='${songs_id}'`;
+    let resultDel = await dbase.executeQuery(deleteSong);
+
+    return res.status(200).send("Lagu berhasil dihapus dari playlist");
+});
+
 
 module.exports = router;
