@@ -3,6 +3,7 @@ const router= express.Router();
 const mysql = require("mysql");
 const jwt = require("jsonwebtoken");
 const dbase = require("../connection");
+const axios = require("axios");
 
 const multer=require("multer");
 
@@ -593,6 +594,61 @@ router.get("/income",function(req,res){
         return res.status(200).send(kump);
     });
     
+   
+});
+
+router.get("/listrequest",function(req,res){
+   
+    
+    
+    connection.query(`select r.id_req as id_request,u.nama_user as nama_user,r.saldo as saldo from requests r, users u where r.id_user=u.id_user and r.status=0`,function(err,result){
+
+
+        return res.status(200).send(result);
+    });
+    
+   
+});
+const key = 'mVO_x8VjQgMBryQOpb41oURSprTVLAmcX_xGGLCle2Q5nJqBFDbNeO8vlMT4ongd';
+router.get("/searchhistory",async function(req,res){
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+    connection.query(`select id_user from users where username='${user.username}'`,async function(err,result){
+        connection.query(`select id_lagu from search_history where id_user='${result[0].id_user}'`,async function(err,result2){
+            //return res.status(200).send(result2[0].id_lagu);
+            let kump=[];
+            for (let i = 0; i < result2.length; i++) {
+                let querySearch = 'https://api.genius.com/songs/'+result2[i].id_lagu+'?access_token=' + key;
+                //return res.status(200).send(querySearch);
+                try {
+                    let resultGet = await axios.get(querySearch);
+                    let data={
+                        judul_lagu:resultGet.data.response.song.title,
+                        artist:resultGet.data.response.song.album.artist.name
+                    }
+                    kump.push(data);
+                } catch (error) {
+                    
+                }
+                
+            }
+            return res.status(200).send(kump);
+        });
+    });
+    
+    
+   
    
 });
 
