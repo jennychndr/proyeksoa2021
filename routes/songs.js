@@ -100,6 +100,7 @@ router.post('/addsongtoplaylist', async(req,res) => {
         temp = {
             
         }
+        return res.status(201).send("Lagu berhasil ditambahkan ke playlist");
     } catch (error) {
         return res.status(404).send("Lagu tidak ditemukan");
     }
