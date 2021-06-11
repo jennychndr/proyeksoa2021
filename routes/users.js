@@ -187,7 +187,7 @@ router.put("/update",function(req,res){
 });
 
 router.get("/searchFriends",function(req,res){
-    var friend_username=req.body.friend_username;
+    var friend_username=req.query.friend_username;
     friend_username=friend_username.toString().toLowerCase();
     connection.query(`select id_user, username, nama_user from users where lower(username) like '%${friend_username}%'`,function(err,result){
         if(result.length<=0){
@@ -198,7 +198,7 @@ router.get("/searchFriends",function(req,res){
     });
 });
 
-router.get("/addFriends",function(req,res){
+router.post("/addFriends",function(req,res){
     const token = req.header("x-auth-token");
     let user = {};
     if(!token){
@@ -214,18 +214,24 @@ router.get("/addFriends",function(req,res){
     }
     var friend_username=req.body.friend_username;
     var friend_id=req.body.friend_id;
+    
     connection.query(`select * from users where username='${user.username}'`,function(err,result){
         if(err) res.status(500).send(err);
         else{
+            var qstring = "";
             if(result.length <1){
                 return res.status(400).send("Invalid username");
             }
             var id_aktif=result[0].id_user;
-            if(friend_username){
-                var qstring="username='"+friend_username+"'";
+            if(friend_username && friend_username != user.username){
+                qstring="username='"+friend_username+"'";
             }
-            else if(friend_id){
-                qstring="user_id='"+friend_id+"'";
+            else if(friend_id && friend_id != id_aktif){
+                qstring="id_user='"+friend_id+"'";
+            }
+            else
+            {
+                return res.status(400).send("Tidak bisa menambahkan diri sendiri menjadi teman");
             }
             connection.query(`select id_user, username, nama_user from users where ${qstring}`,function(err,result){
                 if(result.length<=0){
@@ -237,9 +243,19 @@ router.get("/addFriends",function(req,res){
                         msg: "Teman berhasil ditambahkan!"
                     };
                     var id_teman=result[0].id_user;
-                    connection.query(`insert into friends values(?,?)`,[id_aktif, id_teman],function(err,result){
-                        res.status(201).send(temp);
+                    connection.query(`select * from friends where id_user='${id_aktif}' and teman_user='${id_teman}'`,function(err,result){
+                        if(result.length < 1)
+                        {
+                            connection.query(`insert into friends values(?,?)`,[id_aktif, id_teman],function(err,result){
+                                res.status(201).send(temp);
+                            });
+                        }
+                        else
+                        {
+                            return res.status(400).send("Teman telah tertambahkan");
+                        }
                     });
+                    
                 }
             });
         }
@@ -275,7 +291,7 @@ router.delete("/removeFriends",function(req,res){
                 var qstring="username='"+friend_username+"'";
             }
             else if(friend_id){
-                qstring="user_id='"+friend_id+"'";
+                qstring="id_user='"+friend_id+"'";
             }
             connection.query(`select id_user, username, nama_user from users where ${qstring}`,function(err,result){
                 if(result.length<=0){
