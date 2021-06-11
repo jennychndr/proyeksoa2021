@@ -158,5 +158,12 @@ router.delete('/deletesong', async(req,res) => {
     return res.status(200).send("Lagu berhasil dihapus dari playlist");
 });
 
+//Search lagu di playlist
+
+//List Playlist yang dimiliki user
+
+//List Lagu dari playlist
+
+
 
 module.exports = router;
