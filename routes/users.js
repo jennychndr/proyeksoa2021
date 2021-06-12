@@ -315,7 +315,7 @@ router.delete("/removeFriends",function(req,res){
 });
 
 //Masih blm
-router.put("/recommendations",function(req,res){
+router.get("/recommendations",function(req,res){
     const token = req.header("x-auth-token");
     let user = {};
     if(!token){
@@ -334,22 +334,9 @@ router.put("/recommendations",function(req,res){
         if(err) res.status(500).send(err);
         else{
             var id_aktif=result[0].id_user;
-            connection.query(`select teman_user as teman from friends where id_user='${id_aktif}'`,function(err,result){
-                //dapatkan list friends
-                var friends=result.teman;
-                // var songs_id=[];
-                // var songs_title=[];
-                // var my_songs=[];
-                // var recc=[], recc_tit=[];
-
-                var qstring="";
-                for(var i=0; i<friends.length; i++){
-                    qstring+="h.id_user='"+friends[i]+"' and ";
-                }
-
                 connection.query(`select h.id_playlist as id, d.id_lagu as song_id, d.title_song as song_title
                 from d_playlist d, h_playlist h
-                where ${qstring}h.id_playlist=d.id_playlist and d.id_lagu not in(
+                where h.id_user in (select teman_user from friends where id_user='${id_aktif}') and h.id_playlist=d.id_playlist and d.id_lagu not in(
                     select d.id_lagu
                     from d_playlist d, h_playlist h
                     where h.id_user='${id_aktif}' and h.id_playlist=d.id_playlist)`,function(err,result){
@@ -362,10 +349,9 @@ router.put("/recommendations",function(req,res){
                             send_rec.push(temp);
                         }
                         res.status(200).send({
-                            "Recommendations": sendrec
+                            "Recommendations": send_rec
                         });
                 });
-            });
         }
     });
 });
