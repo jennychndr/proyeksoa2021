@@ -30,7 +30,7 @@ router.post('/addplaylist', async(req,res) => {
     }
     else
     {
-        let tambahPlaylist = `insert into h_playlist values ('','${resultUser[0].id_user}','${nama_playlsit}')`;
+        let tambahPlaylist = `insert into h_playlist values ('','${resultUser[0].id_user}','${user.username}','${nama_playlsit}')`;
         let resPlaylist = await dbase.executeQuery(tambahPlaylist);
 
         temp = {
@@ -95,7 +95,7 @@ router.post('/addsongtoplaylist', async(req,res) => {
     let querySearch = 'https://api.genius.com/songs/'+ songs_id +'?access_token=' + token;
     try {
         let resultGet = await axios.get(querySearch);
-        let insertSong = `insert into d_playlist values ('${id_playlist}', '${songs_id}')`;
+        let insertSong = `insert into d_playlist values ('${id_playlist}', '${songs_id}','${resultGet.data.response.song.full_title}')`;
         let resSong = await dbase.executeQuery(insertSong);
         temp = {
             
@@ -160,10 +160,103 @@ router.delete('/deletesong', async(req,res) => {
 
 //Search lagu di playlist
 
-//List Playlist yang dimiliki user
-
 //List Lagu dari playlist
+router.get('/listSongPlaylist', async(req,res) => {
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        return res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        return res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+    
+    let id_playlist = req.query.id_playlist;
 
+    let querySongPlaylist = `select * from d_playlist where id_playlist='${id_playlist}'`;
+    let resSP = await dbase.executeQuery(querySongPlaylist);
+    if(resSP.length < 1)
+    {
+        return res.status(404).send("Tidak ada lagu dalam playlist");
+    }
+    else
+    {
+        arrSong = [];
+        for (let i = 0; i < resSP.length; i++) {
+            temp = {
+                "song_title": resSP[i].title_song
+            };         
+            arrSong.push(temp);   
+        }
+        return res.status(200).send(arrSong);
+    }
+});
+
+//List Playlist yang dimiliki user sendiri
+router.get('/listPlaylist', async(req,res) => {
+    const token = req.header("x-auth-token");
+    let user = {};
+    if(!token){
+        return res.status(401).send("Unauthorized (not found)");
+    }
+    try{    
+        user = jwt.verify(token,"vagabond");
+    }catch(err){
+        return res.status(401).send("Unauthorized");
+    }
+    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
+        return res.status(400).send("Token expired");
+    }
+
+    let playlist = `select * from h_playlist where username_user='${user.username}'`;
+    let resPlay = await dbase.executeQuery(playlist);
+
+    if(resPlay.length < 1)
+    {
+        return res.status(404).send("User tidak memiliki playlist");
+    }
+    else
+    {
+        arrPlay = [];
+        for (let i = 0; i < resPlay.length; i++) {
+            temp = {
+                "id_playlist" : resPlay[i].id_playlist,
+                "nama_playlist": resPlay[i].nama_playlist
+            };
+            arrPlay.push(temp);
+        }
+        return res.status(200).send(arrPlay);
+    }
+});
+
+//List Playlist yang dimiliki user lain
+router.get('/listPlaylist', async(req,res) => {
+    let username = req.query.username;
+    let playlist = `select * from h_playlist where username_user='${username}'`;
+    let resPlay = await dbase.executeQuery(playlist);
+
+    if(resPlay.length < 1)
+    {
+        return res.status(404).send("User tidak memiliki playlist");
+    }
+    else
+    {
+        arrPlay = [];
+        for (let i = 0; i < resPlay.length; i++) {
+            temp = {
+                "id_playlist" : resPlay[i].id_playlist,
+                "nama_playlist": resPlay[i].nama_playlist
+            };
+            arrPlay.push(temp);
+        }
+        return res.status(200).send(arrPlay);
+    }
+});
 
 
 module.exports = router;
