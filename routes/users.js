@@ -334,6 +334,7 @@ router.get("/recommendations",function(req,res){
         if(err) res.status(500).send(err);
         else{
             var id_aktif=result[0].id_user;
+            //QUERY TERJAGO ABAD INI
                 connection.query(`select h.id_playlist as id, d.id_lagu as song_id, d.title_song as song_title
                 from d_playlist d, h_playlist h
                 where h.id_user in (select teman_user from friends where id_user='${id_aktif}') and h.id_playlist=d.id_playlist and d.id_lagu not in(
