@@ -329,48 +329,42 @@ router.put("/recommendations",function(req,res){
     if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
         return res.status(400).send("Token expired");
     }
-    const password = req.body.password;
-    connection.query(`select * from users where username='${user.username}' and password ='${password}'`,function(err,result){
+    // const password = req.body.password;
+    connection.query(`select * from users where username='${user.username}'`,function(err,result){
         if(err) res.status(500).send(err);
         else{
             var id_aktif=result[0].id_user;
             connection.query(`select teman_user as teman from friends where id_user='${id_aktif}'`,function(err,result){
                 //dapatkan list friends
                 var friends=result.teman;
-                var songs=[];
+                // var songs_id=[];
+                // var songs_title=[];
+                // var my_songs=[];
+                // var recc=[], recc_tit=[];
+
+                var qstring="";
                 for(var i=0; i<friends.length; i++){
-                    connection.query(`select * from h_playlist where id_user='${friends[i]}'`,function(err,result){
-                        var playlists=result.id_playlist;
-                        for(var j=0; j<playlists.length; j++){
-                            connection.query(`select * from d_playlist where id_playlist='${playlists[j]}'`,function(err,result){
-                                songs.append(result.id_lagu);
-                            });
-                        }
-                    });
+                    qstring+="h.id_user='"+friends[i]+"' and ";
                 }
-                var my_songs=[];
-                connection.query(`select * from h_playlist where id_user='${id_aktif}'`,function(err,result){
-                    var playlists_user=result.id_playlist;
-                    for(var j=0; j<playlists_user.length; j++){
-                        connection.query(`select * from d_playlist where id_playlist='${playlists_user[j]}'`,function(err,result){
-                            my_songs.append(result.id_lagu);
+
+                connection.query(`select h.id_playlist as id, d.id_lagu as song_id, d.title_song as song_title
+                from d_playlist d, h_playlist h
+                where ${qstring}h.id_playlist=d.id_playlist and d.id_lagu not in(
+                    select d.id_lagu
+                    from d_playlist d, h_playlist h
+                    where h.id_user='${id_aktif}' and h.id_playlist=d.id_playlist)`,function(err,result){
+                        var send_rec=[];
+                        for(var i=0; i<result.length; i++){
+                            var temp={
+                                "id_lagu": result[i].song_id,
+                                "judul_lagu": result[i].song_title
+                            }
+                            send_rec.push(temp);
+                        }
+                        res.status(200).send({
+                            "Recommendations": sendrec
                         });
-                    }
                 });
-                var recc=[];
-                for(var i=0; i<songs.length; i++){
-                    var flag=1;
-                    for(var j=0; j<my_songs.length; j++){
-                        if(songs[i]==my_songs[j]){
-                            flag=0;
-                            j=my_songs.length;
-                        }
-                    }
-                    if(flag==1){
-                        recc.append(songs[i]);
-                    }
-                }
-                res.status(200).send({"Recommendations:" : recc});
             });
         }
     });
