@@ -16,9 +16,9 @@ router.post('/addplaylist', async(req,res) => {
     }catch(err){
         return res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     let nama_playlsit = req.body.nama_playlist;
 
     let cekUser = `select * from users where username='${user.username}'`;
@@ -65,9 +65,9 @@ router.get('/title', async(req,res) => {
     }catch(err){
         return res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
 
     let cekUser = `select * from users where username='${user.username}'`;
     let resultUser = await dbase.executeQuery(cekUser);
@@ -121,9 +121,9 @@ router.post('/addsongtoplaylist', async(req,res) => {
     }catch(err){
         return res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){
+    //     return res.status(400).send("Token expired");
+    // }
     let id_playlist = req.body.id_playlist;
     let songs_id = req.body.songs_id;
 
@@ -149,7 +149,7 @@ router.post('/addsongtoplaylist', async(req,res) => {
                 let updateApi = `update users set api_hit=${apiupdate} where username='${user.username}'`;
                 let resUpdate = await dbase.executeQuery(updateApi);
 
-                return res.status(201).send("Lagu berhasil ditambahkan ke playlist");
+                return res.status(201).send({"msg" : "Lagu berhasil ditambahkan ke playlist"});
             } catch (error) {
                 return res.status(404).send("Lagu tidak ditemukan");
             }
@@ -178,9 +178,9 @@ router.delete('/deleteplaylist', async(req,res) => {
     }catch(err){
         return res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){
+    //     return res.status(400).send("Token expired");
+    // }
 
     let cekUser = `select * from users where username='${user.username}'`;
     let resultUser = await dbase.executeQuery(cekUser);
@@ -227,9 +227,9 @@ router.delete('/deletesong', async(req,res) => {
     }catch(err){
         return res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){
+    //     return res.status(400).send("Token expired");
+    // }
 
     let cekUser = `select * from users where username='${user.username}'`;
     let resultUser = await dbase.executeQuery(cekUser);
@@ -276,9 +276,9 @@ router.get('/listSongPlaylist', async(req,res) => {
     }catch(err){
         return res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     
     let cekUser = `select * from users where username='${user.username}'`;
     let resultUser = await dbase.executeQuery(cekUser);
@@ -337,9 +337,9 @@ router.get('/listPlaylist', async(req,res) => {
     }catch(err){
         return res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
 
     let cekUser = `select * from users where username='${user.username}'`;
     let resultUser = await dbase.executeQuery(cekUser);

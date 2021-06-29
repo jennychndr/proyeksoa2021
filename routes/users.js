@@ -129,9 +129,9 @@ router.put("/delete",function(req,res){
     }catch(err){
         res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     // const username = req.body.username;
     const password = req.body.password;
     connection.query(`select * from users where username='${user.username}' and password ='${password}'`,function(err,result){
@@ -158,9 +158,9 @@ router.put("/update",function(req,res){
     }catch(err){
         res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     // const username = req.body.username;
     const password_lama = req.body.password_lama;
     const nama_user = req.body.nama_user;
@@ -209,9 +209,9 @@ router.post("/addFriends",function(req,res){
     }catch(err){
         res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     var friend_username=req.body.friend_username;
     var friend_id=req.body.friend_id;
     
@@ -252,7 +252,7 @@ router.post("/addFriends",function(req,res){
                         }
                         else
                         {
-                            return res.status(400).send("Teman telah tertambahkan");
+                            return res.status(200).send("Teman telah tertambahkan");
                         }
                     });
                     
@@ -275,9 +275,9 @@ router.delete("/removeFriends",function(req,res){
     }catch(err){
         res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     var friend_username=req.body.friend_username;
     var friend_id=req.body.friend_id;
     connection.query(`select * from users where username='${user.username}'`,function(err,result){
@@ -326,9 +326,9 @@ router.get("/recommendations",function(req,res){
     }catch(err){
         res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     // const password = req.body.password;
     connection.query(`select * from users where username='${user.username}'`,function(err,result){
         if(err) res.status(500).send(err);
@@ -368,9 +368,9 @@ router.post("/topup",function(req,res){
     }catch(err){
         res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     // const username = req.body.username;
     const saldo = req.body.saldo;
     let saldodulu=0;
@@ -487,9 +487,9 @@ router.put("/apihit",function(req,res){
     }catch(err){
         res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     // const username = req.body.username;
     
     connection.query(`select saldo from users where username='${user.username}'`,function(err,result){
@@ -618,9 +618,9 @@ router.get("/searchhistory",async function(req,res){
     }catch(err){
         res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     connection.query(`select id_user from users where username='${user.username}'`,async function(err,result){
         connection.query(`select id_lagu from search_history where id_user='${result[0].id_user}'`,async function(err,result2){
             //return res.status(200).send(result2[0].id_lagu);
@@ -660,9 +660,9 @@ router.get("/history",function(req,res){
     }catch(err){
         res.status(401).send("Unauthorized");
     }
-    if((new Date().getTime()/1000)-user.iat>10*60){//10mnt
-        return res.status(400).send("Token expired");
-    }
+    // if((new Date().getTime()/1000)-user.iat>60*60){//10mnt
+    //     return res.status(400).send("Token expired");
+    // }
     // const username = req.body.username;
     
     connection.query(`select id_user from users where username='${user.username}'`,function(err,result){
