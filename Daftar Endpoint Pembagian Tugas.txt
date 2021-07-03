@@ -1,0 +1,45 @@
+Daftar Endpoint berdasarkan pembagian tugas
+
+Jenny Chandra - 218116725
+
+Transaksi
+/api/users/topup
+/api/users/req/acc/:id_req
+/api/users/req/dec/:id_req
+/api/users/apihit
+/api/users/income
+/api/users/listrequest
+
+History
+/api/users/searchhistory
+/api/users/history
+
+Joe Sentosa Jaya - 218116726
+
+Playlist
+/api/songs/addplaylist
+/api/songs/addsongtoplaylist
+/api/songs/deleteplaylist
+/api/songs/deletesong
+/api/songs/listSongPlaylist
+/api/songs/listPlaylist
+
+Songs
+/api/songs/title
+
+Marvella Lingadi - 218116731
+
+Akun User
+/api/users/register
+/api/users/login
+/api/users/update
+/api/users/delete
+
+Search, Add, Remove friend
+/api/users/searchFriends
+/api/users/addFriends
+/api/users/removeFriends
+
+Recommendations
+/api/users/recommendations
+
