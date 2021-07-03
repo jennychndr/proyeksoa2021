@@ -51,8 +51,8 @@ router.post('/addplaylist', async(req,res) => {
         }
     }
 });
-
 const token = 'mVO_x8VjQgMBryQOpb41oURSprTVLAmcX_xGGLCle2Q5nJqBFDbNeO8vlMT4ongd';
+
 
 router.get('/title', async(req,res) => {
     const xtoken = req.header("x-auth-token");
@@ -79,6 +79,12 @@ router.get('/title', async(req,res) => {
     {
         if(resultUser[0].api_hit - 10 >= 0)
         {
+            let date = new Date();
+            let full = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();
+            let tg = full.substr(0,10);
+            let ins = `insert into search_history values('${resultUser[0].id_user}','${req.query.name}','${tg}')`;
+            let resin = await dbase.executeQuery(ins);
+
             var arrSong = [];
             let querySearch = 'https://api.genius.com/search?access_token=' + token + '&q=' + req.query.name;
             try {
@@ -194,7 +200,7 @@ router.delete('/deleteplaylist', async(req,res) => {
         {
             let id_playlist = req.body.id_playlist;
             let deletedplaylist = `delete from d_playlist where id_playlist = '${id_playlist}'`;
-            let resultDel = await dbase.executeQuery(deleteplaylist);
+            let resultDel = await dbase.executeQuery(deletedplaylist);
         
             let deletehplaylist = `delete from h_playlist where id_playlist = '${id_playlist}'`;
             let resultDel1 = await dbase.executeQuery(deletehplaylist);
@@ -402,7 +408,7 @@ router.get('/listPlaylist', async(req,res) => {
         for (let i = 0; i < resPlay.length; i++) {
             temp = {
                 "id_playlist" : resPlay[i].id_playlist,
-                "nama_playlist": resPlay[i].nama_playlist
+                "nama_playlist": resPlay[i].nama_playlvst
             };
             arrPlay.push(temp);
         }

@@ -622,23 +622,15 @@ router.get("/searchhistory",async function(req,res){
     //     return res.status(400).send("Token expired");
     // }
     connection.query(`select id_user from users where username='${user.username}'`,async function(err,result){
-        connection.query(`select id_lagu from search_history where id_user='${result[0].id_user}'`,async function(err,result2){
+        connection.query(`select * from search_history where id_user='${result[0].id_user}'`,async function(err,result2){
             //return res.status(200).send(result2[0].id_lagu);
             let kump=[];
             for (let i = 0; i < result2.length; i++) {
-                let querySearch = 'https://api.genius.com/songs/'+result2[i].id_lagu+'?access_token=' + key;
-                //return res.status(200).send(querySearch);
-                try {
-                    let resultGet = await axios.get(querySearch);
-                    let data={
-                        judul_lagu:resultGet.data.response.song.title,
-                        artist:resultGet.data.response.song.album.artist.name
-                    }
-                    kump.push(data);
-                } catch (error) {
-                    
+                temp = {
+                    "search" : result2[i].id_lagu,
+                    "tanggal_pencarian" : result2[i].tgl_search
                 }
-                
+                kump.push(temp);   
             }
             return res.status(200).send(kump);
         });
